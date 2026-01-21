@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Airport Electromechanical Maintenance System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<style>
+body, html {margin:0;padding:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#eef1f4;color:#000;}
+#loginPage, #welcomePage {position:fixed; inset:0; display:flex; justify-content:center; align-items:center; flex-direction:column; transition:0.5s; background:#eef1f4; z-index:1000;}
+#loginPage input, #loginPage button {padding:12px;margin:8px 0;width:250px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
+#loginPage input:focus{border-color:#0a1f44;box-shadow:0 0 6px rgba(10,31,68,0.3);}
+#loginPage button{padding:12px 20px;margin-top:12px;width:270px;border:none;border-radius:8px;background:#0a1f44;color:white;font-size:16px;cursor:pointer;transition:.3s;}
+#loginPage button:hover{background:#06233a;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+#welcomePage {display:none; background:#fff; z-index:1000; flex-direction:column; justify-content:center; align-items:center;}
+#welcomePage h1 {font-size:36px;color:#0a1f44;margin-bottom:10px;}
+header{display:none;padding:25px 20px 30px;background:linear-gradient(135deg,#0a1f44,#0f2f55,#0a1f44);color:white;border-radius:0 0 22px 22px;box-shadow:0 10px 30px rgba(0,0,0,.25);}
+.airport-pro{text-align:center;position:relative;margin-bottom:20px;}
+.airport-title{font-size:34px;font-weight:800;letter-spacing:1.8px;background:linear-gradient(120deg,#e6faff,#67e8f9,#4fd1c5,#e6faff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 100%;animation:glowMove 3s ease-in-out infinite alternate, shimmer 5s linear infinite;}
+.airport-sub{font-size:16px;letter-spacing:3px;color:#7dd3fc;margin-top:8px;}
+.plane {
+  position: absolute;
+  font-size: 32px;
+  animation: flySmooth 12s ease-in-out infinite;
+}
+
+@keyframes flySmooth {
+  0%   { top: -10px; left: -50px; transform: rotate(0deg); }
+  40%  { top: -10px; left: 50%; transform: rotate(0deg); }
+  50%  { top: 40px; left: 55%; transform: rotate(180deg); } /* الطائرة تلف */
+  90%  { top: 40px; left: 110%; transform: rotate(180deg); }
+  100% { top: -10px; left: -50px; transform: rotate(0deg); } /* تعود البداية بشكل سلس */
+}
+
+
+.info-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:15px;background:rgba(255,255,255,.08);padding:12px 16px;border-radius:14px;backdrop-filter:blur(6px);}
+.info-item{display:flex;align-items:center;gap:6px;font-weight:500;color:#e6faff;}
+.badge{padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,#14b8a6,#06b6d4);color:#022c22;font-weight:700;box-shadow:0 0 12px rgba(20,184,166,.8);}
+@keyframes glowMove{from{text-shadow:0 0 6px #4fd1c5,0 0 16px rgba(79,209,197,.7),0 0 28px rgba(79,209,197,.5);}to{text-shadow:0 0 14px #67e8f9,0 0 32px rgba(103,232,249,.9),0 0 60px rgba(103,232,249,.7);}}
+@keyframes shimmer{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
+@keyframes fly{0%{left:-50px;opacity:0;}10%{opacity:1;}50%{left:50%;transform:translateX(-50%);}90%{opacity:1;}100%{left:110%;opacity:0;}}
+main{display:none;padding:30px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;padding:30px}
+.card{background:#fff;border-radius:18px;padding:20px;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.08);transition:.3s;text-align:center;font-weight:600}
+.card:hover{transform:translateY(-5px)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center}
+.overlay.active{display:flex}
+.box{background:#fff;border-radius:18px;width:95%;max-width:1200px;max-height:90%;overflow:auto;padding:25px}
+button,input,select{padding:10px;margin:6px 0;width:100%;border-radius:10px;border:1px solid #ccc}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:center}
+th{background:#f5f7fa}
+.section{margin-top:25px}
+.badge{padding:4px 10px;border-radius:8px;background:#e3e7ee;font-size:12px}
+label{font-weight:bold;margin-top:10px;display:block}
+</style>
+</head>
+<body>
+<div id="loginPage">
+  <h1>Airport Maintenance System</h1>
+  <p>King Hussein International Airport</p>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+  <div id="loginError" style="color:red; margin-top:10px;"></div>
+</div>
+<div id="welcomePage"><h1>✈ Welcome!</h1><h2>King Hussein International Airport</h2></div>
+<header id="header">
+  <div class="airport-pro">
+    <div class="plane">✈</div>
+    <div class="airport-title">King Hussein International Airport</div>
+    <div class="airport-sub">Electromechanical Maintenance System</div>
+  </div>
+  <div class="info-bar">
+    <div class="info-item">🕒 <span id="dt"></span></div>
+    <div class="info-item">📊 Parameter: <span class="badge" id="paramValue">Operational</span></div>
+    <div class="info-item">🌡 <span id="tempValue">24 °C</span></div>
+    <div class="info-item">💧 <span id="humidityValue">48 %</span></div>
+    <div class="info-item">🌬 <span id="wind">12 km/h</span></div>
+    <div class="info-item">🧭 <span id="dir">NE</span></div>
+  </div>
+</header>
+<main>
+  <div class="grid">
+    <div class="card" onclick="openAssets()">⚙ Assets</div>
+    <div class="card" onclick="openMaintenance()">🛠 Maintenance</div>
+    <div class="card" onclick="openInspections()">🔍 Inspections</div>
+    <div class="card" onclick="openReports()">📄 Reports</div>
+  </div>
+</main>
+<div class="overlay" id="overlay">
+ <div class="box">
+  <button onclick="closeOverlay()">✖ Close</button>
+  <div id="content"></div>
+ </div>
+</div>
+
+<script>
+/* تسجيل الدخول */
+const correctUser = "ABDALH";
+const correctPass = "1997";
+
+const loginBtn = document.getElementById("loginBtn");
+const dt = document.getElementById("dt"); // عنصر التاريخ/الوقت
+
+loginBtn.addEventListener("click", checkLogin);
+
+function checkLogin() {
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+
+  if (user === correctUser && pass === correctPass) {
+    // إخفاء صفحة تسجيل الدخول
+    document.getElementById("loginPage").style.display = "none";
+    // عرض صفحة الترحيب
+    document.getElementById("welcomePage").style.display = "flex";
+
+    // بعد 3 ثواني، إخفاء الترحيب وإظهار الواجهة الرئيسية
+    setTimeout(() => {
+      document.getElementById("welcomePage").style.display = "none";
+      document.getElementById("header").style.display = "block";
+      document.querySelector("main").style.display = "block";
+    }, 3000);
+  } else {
+    // عرض رسالة خطأ
+    document.getElementById("loginError").innerText = "Incorrect username or password!";
+  }
+}
+
+/* تحديث الوقت كل ثانية */
+setInterval(() => dt.innerText = new Date().toLocaleString(), 1000);
+
+/* WEATHER */
+function updateWeather(){
+  let temp = (20 + Math.random()*10).toFixed(1);
+  let humidity = (40 + Math.random()*30).toFixed(0);
+  document.getElementById("tempValue").innerText = temp + " °C";
+  document.getElementById("humidityValue").innerText = humidity + " %";
+}
+setInterval(updateWeather,600000);
+updateWeather();
+
+/* MAKE EQUIPMENT */
+const makeEquip=(code,name,loc,man,model,status="Running",type="General")=>{
+  let technical={};
+  if(type==="Generator"){technical={"Rated Power (kVA)":"1500","Rated Voltage (V)":"400","Frequency (Hz)":"50","Power Factor":"0.8","Fuel Type":"Diesel","Engine Speed (RPM)":"1500","Coolant Temp (°C)":"82","Oil Pressure (bar)":"4.2","Battery Voltage (V)":"24"};}
+  else if(type==="UPS"){technical={"Input Voltage (V)":"400","Output Voltage (V)":"230","Rated Capacity (kVA)":"160","Battery Type":"VRLA","Battery Autonomy (min)":"45","Load Level (%)":"68","Bypass Mode":"Automatic"};}
+  else if(type==="CCR"){technical={"Output Current (A)":"6.6","Max Voltage (V)":"5000","Rated Power (kVA)":"20","Regulation Mode":"Constant Current","Insulation Resistance (MΩ)":">10","No. of Circuits":"4"};}
+  else if(type==="Pump"){technical={"Flow Rate (m³/h)":"180","Total Head (m)":"65","Motor Power (kW)":"55","Motor Speed (RPM)":"1480","Discharge Pressure (bar)":"9.5","Efficiency (%)":"78"};}
+  else if(type==="HVAC"){technical={"Cooling Capacity (TR)":"250","Chilled Water Temp (°C)":"7","Return Water Temp (°C)":"12","Compressor Type":"Centrifugal","Refrigerant":"R134a","Air Flow Rate (CFM)":"48000"};}
+  else if(type==="XRay"){technical={"Tunnel Size (mm)":"1000x1000","Penetration (Steel mm)":"40","Generator Voltage (kV)":"160","Image Resolution":"HD","Conveyor Speed (m/s)":"0.22","Radiation Leakage (µSv/h)":"<1"};}
+  else if(type==="WalkThrough"){technical={"Detection Zones":"33","Sensitivity Levels":"0-255","Operating Frequency":"50 Hz","Alarm Volume (dB)":"90","Power Supply":"220 VAC","Operating Temp (°C)":"-20 to +60"};}
+  else if(type==="Conveyor"){technical={"Motor Power (kW)":"7.5","Speed (m/s)":"1.2","Length (m)":"25","Width (m)":"0.8","Capacity (kg)":"1200"};}
+  else if(type==="GearMotor"){technical={"Rated Torque (Nm)":"250","Speed (RPM)":"30","Voltage (V)":"400","Motor Power (kW)":"5.5","Gear Ratio":"20:1"};}
+  else if(type==="Sensor"){technical={"Type":"Photo/Proximity","Range (m)":"0.5","Accuracy (mm)":"2","Response Time (ms)":"20"};}
+  else if(type==="Panel"){technical={"Rated Voltage (V)":"400","Rated Current (A)":"250","No. of Breakers":"12","Protection Type":"MCCB","IP Rating":"54"}}  
+  return {core:{code,name,location:loc,manufacturer:man,model,status,type},technical};
+};
+
+/* DATABASE */
+let db={assets:{
+"Power Systems":{"Generators":[
+makeEquip("GEN-01","Main Generator","Power Station","CAT","3516B","Running","Generator"),
+makeEquip("GEN-02","Standby Generator","Power Station","MTU","16V4000","Running","Generator"),
+makeEquip("GEN-03","Emergency Generator","Terminal 1","Cummins","QSK60","Standby","Generator"),
+makeEquip("GEN-04","Cargo Generator","Cargo Area","Perkins","4016TAG","Running","Generator"),
+makeEquip("GEN-05","ATC Generator","ATC Tower","CAT","C175","Running","Generator")],
+"UPS":[
+makeEquip("UPS-01","UPS Terminal 1","Terminal 1","Eaton","93PM","Running","UPS"),
+makeEquip("UPS-02","UPS Terminal 2","Terminal 2","APC","Galaxy VX","Running","UPS"),
+makeEquip("UPS-03","UPS ATC","ATC","Vertiv","Liebert EXL","Running","UPS"),
+makeEquip("UPS-04","UPS BHS","Baggage Hall","Eaton","9395","Running","UPS"),
+makeEquip("UPS-05","UPS IT","IT Room","APC","Symmetra PX","Running","UPS")]},
+"Airfield Lighting":{"CCR":[
+makeEquip("CCR-01","CCR RWY 08","AFL Room","ADB","CCR-20","Running","CCR"),
+makeEquip("CCR-02","CCR RWY 26","AFL Room","Siemens","SICR","Running","CCR"),
+makeEquip("CCR-03","CCR TWY A","AFL","ADB","CCR-10","Running","CCR"),
+makeEquip("CCR-04","CCR TWY B","AFL","ADB","CCR-15","Running","CCR"),
+makeEquip("CCR-05","CCR Apron","AFL","Siemens","SICR","Running","CCR")]},
+"Mechanical":{"Pumps":[
+makeEquip("P-01","Chilled Water Pump","Plant Room","Grundfos","CR90","Running","Pump"),
+makeEquip("P-02","Fire Fighting Pump","Fire Room","UL/FM","NFPA20","Running","Pump"),
+makeEquip("P-03","Domestic Water Pump","Utility","KSB","ETA","Running","Pump"),
+makeEquip("P-04","Drainage Pump","Basement","Flygt","NP","Running","Pump"),
+makeEquip("P-05","Irrigation Pump","Landscape","Pedrollo","CP","Running","Pump")],
+"HVAC":[
+makeEquip("HVAC-01","Chiller No.1","Plant","Trane","CVHF","Running","HVAC"),
+makeEquip("HVAC-02","Chiller No.2","Plant","Carrier","19XR","Running","HVAC"),
+makeEquip("HVAC-03","AHU Terminal 1","T1","Daikin","AHU","Running","HVAC"),
+makeEquip("HVAC-04","AHU Terminal 2","T2","York","AHU","Running","HVAC"),
+makeEquip("HVAC-05","FCU Offices","Admin","LG","FCU","Running","HVAC")]},
+"Security Screening Systems":{"XRay":[
+makeEquip("XR-01","Baggage X-Ray T1","Terminal 1","Smiths","HI-SCAN","Running","XRay"),
+makeEquip("XR-02","Baggage X-Ray T2","Terminal 2","Rapiscan","628XR","Running","XRay"),
+makeEquip("XR-03","Cargo X-Ray","Cargo","Smiths","HI-SCAN","Running","XRay"),
+makeEquip("XR-04","Oversize X-Ray","Terminal 1","Rapiscan","632XR","Running","XRay"),
+makeEquip("XR-05","Hand Luggage X-Ray","Security","Smiths","6040","Running","XRay")],
+"Walk Through":[
+makeEquip("WT-01","Walk Through Gate A","Departure","CEIA","PMD2","Running","WalkThrough"),
+makeEquip("WT-02","Walk Through Gate B","Departure","Garrett","PD6500i","Running","WalkThrough"),
+makeEquip("WT-03","Walk Through Arrival","Arrival","CEIA","PMD2","Running","WalkThrough"),
+makeEquip("WT-04","Walk Through VIP","VIP Hall","Garrett","PD6500i","Running","WalkThrough"),
+makeEquip("WT-05","Walk Through Staff","Staff Gate","CEIA","PMD2","Running","WalkThrough")]},
+"BHS – Baggage Handling System":{"Conveyors":[
+makeEquip("BHS-CV-01","Arrival Conveyor","Arrival Hall","Siemens","CV35","Running","Conveyor"),
+makeEquip("BHS-CV-02","Departure Conveyor","Departure Hall","Siemens","CV40","Running","Conveyor"),
+makeEquip("BHS-CV-03","Sorting Conveyor","Sorting Area","Siemens","CV45","Running","Conveyor"),
+makeEquip("BHS-CV-04","Transfer Conveyor 1","BHS Area","Siemens","CV50","Running","Conveyor"),
+makeEquip("BHS-CV-05","Transfer Conveyor 2","BHS Area","Siemens","CV55","Running","Conveyor")],
+"Gear Motors":[
+makeEquip("GM-01","Gear Motor CV-01","BHS Area","Siemens","RF37","Running","GearMotor"),
+makeEquip("GM-02","Gear Motor CV-02","BHS Area","Siemens","RF47","Running","GearMotor"),
+makeEquip("GM-03","Gear Motor CV-03","BHS Area","Siemens","RF57","Running","GearMotor"),
+makeEquip("GM-04","Gear Motor CV-04","BHS Area","Siemens","RF67","Running","GearMotor"),
+makeEquip("GM-05","Gear Motor CV-05","BHS Area","Siemens","RF77","Running","GearMotor")],
+"Sensors":[
+makeEquip("SEN-01","Photo Sensor CV-01","BHS","SICK","WTB4","Running","Sensor"),
+makeEquip("SEN-02","Proximity Sensor CV-02","BHS","IFM","IGT200","Running","Sensor"),
+makeEquip("SEN-03","Photo Sensor CV-03","BHS","SICK","WTB5","Running","Sensor"),
+makeEquip("SEN-04","Proximity Sensor CV-04","BHS","IFM","IGT250","Running","Sensor"),
+makeEquip("SEN-05","Photo Sensor CV-05","BHS","SICK","WTB6","Running","Sensor")]},
+"Electrical Panels":{"Panels":[
+makeEquip("EP-01","Main Panel T1","T1 Electrical Room","Siemens","MCCB-12","Running","Panel"),
+makeEquip("EP-02","Main Panel T2","T2 Electrical Room","ABB","MCCB-16","Running","Panel"),
+makeEquip("EP-03","UPS Panel","IT Room","Schneider","MCCB-8","Running","Panel"),
+makeEquip("EP-04","Fire Panel","Fire Room","Siemens","MCCB-10","Running","Panel"),
+makeEquip("EP-05","Aux Panel","Admin","ABB","MCCB-6","Running","Panel")]} }};
+
+/* NAVIGATION */
+let currentGroup,currentType,currentIndex;
+const overlay=document.getElementById("overlay");
+const content=document.getElementById("content");
+
+function openAssets(){
+  let html="<h3>Asset Groups</h3><div class='grid'>";
+  Object.keys(db.assets).forEach(g=>html+=`<div class="card" onclick="openGroup('${g}')">${g}</div>`);
+  html+="</div>";
+  content.innerHTML=html;
+  overlay.classList.add("active");
+}
+function openGroup(g){
+  currentGroup=g;
+  let html=`<h3>${g}</h3><div class='grid'>`;
+  Object.keys(db.assets[g]).forEach(t=>html+=`<div class="card" onclick="openType('${t}')">${t}</div>`);
+  html+="</div><button onclick='openAssets()'>⬅ Back</button>";
+  content.innerHTML=html;
+}
+function openType(t){
+  currentType=t;
+  let data=db.assets[currentGroup][t];
+  let html=`<h3>${t}</h3><button onclick="addEquipmentForm()">➕ Add Equipment</button><table><tr><th>Code</th><th>Location</th><th>Status</th><th>Open</th></tr>`;
+  data.forEach((e,i)=>html+=`<tr><td>${e.core.code}</td><td>${e.core.location}</td><td><span class="badge">${e.core.status}</span></td><td><button onclick="openEquipment(${i})">Open</button></td></tr>`);
+  html+=`</table><button onclick="openGroup('${currentGroup}')">⬅ Back</button>`;
+  content.innerHTML=html;
+}
+function openEquipment(i){
+  currentIndex = i;
+  let e = db.assets[currentGroup][currentType][i];
+  setParameter(`${e.core.code} – ${e.core.name}`);
+
+  let html = `<h3>${e.core.code} – ${e.core.name}</h3>`;
+
+  // Core Data
+  html += `<div class="section"><b>Core Data</b><table>`;
+  Object.entries(e.core).forEach(([k,v]) => html += `<tr><td>${k}</td><td>${v}</td></tr>`);
+  html += `</table></div>`;
+
+  // Technical Data
+  html += `<div class="section"><b>Technical Data</b><table>`;
+  Object.entries(e.technical).forEach(([k,v]) => html += `<tr><td>${k}</td><td>${v}</td></tr>`);
+  html += `</table></div>`;
+
+  // Buttons
+  html += `<button onclick="editEquipment()">✏ Edit</button>`;
+  html += `<button onclick="printPDF()">🖨 Print PDF</button>`;
+
+  // Upload File
+  html += `<div class="section"><input type="file" id="deviceFile" style="margin-top:10px"></div>`;
+  html += `<button onclick="uploadDeviceFile(${i})">⬆ Upload File</button>`;
+
+  // Display uploaded files if any
+  if(e.files && e.files.length > 0){
+    html += `<div class="section"><b>Uploaded Files</b><ul>`;
+    e.files.forEach((f, index) => {
+      html += `<li>${f.name} <button onclick="downloadUploadedFile(${i}, ${index})">⬇ Download</button></li>`;
+    });
+    html += `</ul></div>`;
+  }
+
+  // Back button
+  html += `<button onclick="openType('${currentType}')">⬅ Back</button>`;
+// Input لإدخال الموقع (Latitude & Longitude)
+html += `<div class="section"><b>Device Location</b></div>`;
+html += `Latitude: <input type="text" id="lat" placeholder="Latitude" value="${e.locationLat || ''}"><br>`;
+html += `Longitude: <input type="text" id="lng" placeholder="Longitude" value="${e.locationLng || ''}"><br>`;
+html += `<button onclick="saveDeviceLocation(${i})">📍 Save Location</button>`;
+html += `<button onclick="showDeviceOnMap(${i})">🗺 Show on Map</button>`;
+html += `<button onclick="shareDeviceLocation(${i})">🔗 Share Location</button>`;
+
+  content.innerHTML = html;
+}
+
+function uploadDeviceFile(i){
+  const fileInput = document.getElementById("deviceFile");
+  const file = fileInput.files[0]; // الملف الذي اختاره المستخدم
+  if(!file){
+    alert("Please select a file first!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    // حفظ محتوى الملف في الجهاز
+    let device = db.assets[currentGroup][currentType][i];
+    if(!device.files) device.files = []; // مصفوفة الملفات إذا لم توجد
+    device.files.push({name: file.name, content: e.target.result});
+    alert(`File "${file.name}" uploaded successfully!`);
+  };
+  
+  reader.readAsDataURL(file); // تحويل الملف إلى Base64 لتخزينه
+}
+
+/* EDIT / ADD */
+function addEquipmentForm(){
+  let type=currentType;
+  let html=`<h3>Add New ${type}</h3><div class="section"><b>Core Data</b>`;
+  html+=`<input id="code" placeholder="Code"><input id="name" placeholder="Name"><input id="location" placeholder="Location"><input id="manufacturer" placeholder="Manufacturer"><input id="model" placeholder="Model"><select id="status"><option>Running</option><option>Standby</option><option>Fault</option></select></div>`;
+  let techFields=[];
+  if(type==="Generator") techFields=["Rated Power (kVA)","Rated Voltage (V)","Frequency (Hz)","Power Factor","Fuel Type","Engine Speed (RPM)","Coolant Temp (°C)","Oil Pressure (bar)","Battery Voltage (V)"];
+  else if(type==="UPS") techFields=["Input Voltage (V)","Output Voltage (V)","Rated Capacity (kVA)","Battery Type","Battery Autonomy (min)","Load Level (%)","Bypass Mode"];
+  else if(type==="CCR") techFields=["Output Current (A)","Max Voltage (V)","Rated Power (kVA)","Regulation Mode","Insulation Resistance (MΩ)","No. of Circuits"];
+  else if(type==="Pump") techFields=["Flow Rate (m³/h)","Total Head (m)","Motor Power (kW)","Motor Speed (RPM)","Discharge Pressure (bar)","Efficiency (%)"];
+  else if(type==="HVAC") techFields=["Cooling Capacity (TR)","Chilled Water Temp (°C)","Return Water Temp (°C)","Compressor Type","Refrigerant","Air Flow Rate (CFM)"];
+  else if(type==="XRay") techFields=["Tunnel Size (mm)","Penetration (Steel mm)","Generator Voltage (kV)","Image Resolution","Conveyor Speed (m/s)","Radiation Leakage (µSv/h)"];
+  else if(type==="WalkThrough") techFields=["Detection Zones","Sensitivity Levels","Operating Frequency","Alarm Volume (dB)","Power Supply","Operating Temp (°C)"];
+  else if(type==="Conveyor") techFields=["Motor Power (kW)","Speed (m/s)","Length (m)","Width (m)","Capacity (kg)"];
+  else if(type==="GearMotor") techFields=["Rated Torque (Nm)","Speed (RPM)","Voltage (V)","Motor Power (kW)","Gear Ratio"];
+  else if(type==="Sensor") techFields=["Type","Range (m)","Accuracy (mm)","Response Time (ms)"];
+  else if(type==="Panel") techFields=["Rated Voltage (V)","Rated Current (A)","No. of Breakers","Protection Type","IP Rating"];
+  html+=`<div class="section"><b>Technical Data</b></div>`;
+  techFields.forEach(f=>html+=`<input id="tech-${f}" placeholder="${f}">`);
+  html+=`<button onclick="saveNewEquipment()">💾 Save</button>`;
+  content.innerHTML=html;
+}
+function saveNewEquipment(){
+  let type=currentType; let tech={};
+  document.querySelectorAll(`[id^="tech-"]`).forEach(i=>tech[i.id.replace("tech-","")]=i.value);
+  let e={core:{code:code.value,name:name.value,location:location.value,manufacturer:manufacturer.value,model:model.value,status:status.value,type:type},technical:tech};
+  db.assets[currentGroup][currentType].push(e);
+  openType(currentType); setParameter(`${e.core.code} – ${e.core.name}`);
+}
+function saveDeviceLocation(i){
+  let device = db.assets[currentGroup][currentType][i];
+  let lat = parseFloat(document.getElementById("lat").value);
+  let lng = parseFloat(document.getElementById("lng").value);
+  if(isNaN(lat) || isNaN(lng)){
+    alert("Please enter valid latitude and longitude!");
+    return;
+  }
+  device.locationLat = lat;
+  device.locationLng = lng;
+  alert(`Location saved: (${lat}, ${lng})`);
+}
+function showDeviceOnMap(i){
+  let device = db.assets[currentGroup][currentType][i];
+  if(!device.locationLat || !device.locationLng){
+    alert("Device location not set!");
+    return;
+  }
+
+  // إنشاء overlay للخريطة
+  overlay.classList.add("active");
+  content.innerHTML = `<h3>${device.core.code} – ${device.core.name} Location</h3>
+    <div id="map" style="height:500px;width:100%;border-radius:10px;"></div>
+    <button onclick="closeOverlay()">⬅ Back</button>`;
+
+  // إنشاء الخريطة باستخدام Leaflet
+  const map = L.map('map').setView([device.locationLat, device.locationLng], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+  }).addTo(map);
+
+  // Marker للجهاز
+  const marker = L.marker([device.locationLat, device.locationLng]).addTo(map)
+    .bindPopup(`${device.core.code} – ${device.core.name}`)
+    .openPopup();
+}
+function shareDeviceLocation(i){
+  let device = db.assets[currentGroup][currentType][i];
+  if(!device.locationLat || !device.locationLng){
+    alert("Device location not set!");
+    return;
+  }
+  let url = `https://www.google.com/maps?q=${device.locationLat},${device.locationLng}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    alert("Map link copied to clipboard!");
+  });
+}
+
+function editEquipment(){
+  let e=db.assets[currentGroup][currentType][currentIndex]; let html=`<h3>Edit ${e.core.code} – ${e.core.name}</h3>`;
+  html+=`<div class="section"><b>Core Data</b></div>`; Object.entries(e.core).forEach(([k,v])=>{html+=`<label>${k}</label><input id="core-${k}" value="${v}">`;});
+  html+=`<div class="section"><b>Technical Data</b></div>`; Object.entries(e.technical).forEach(([k,v])=>{html+=`<label>${k}</label><input id="tech-${k}" value="${v}">`;});
+  html+=`<button onclick="saveEdits()">💾 Save</button><button onclick="openEquipment(${currentIndex})">⬅ Cancel</button>`; content.innerHTML=html;
+}
+function saveEdits(){
+  let e=db.assets[currentGroup][currentType][currentIndex];
+  Object.keys(e.core).forEach(k=>{let el=document.getElementById(`core-${k}`); if(el) e.core[k]=el.value;});
+  Object.keys(e.technical).forEach(k=>{let el=document.getElementById(`tech-${k}`); if(el) e.technical[k]=el.value;});
+  openEquipment(currentIndex);
+}
+
+/* PRINT PDF */
+function printPDF(){
+  let e=db.assets[currentGroup][currentType][currentIndex];
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+  doc.setFont("helvetica","bold"); doc.setFontSize(18); doc.text("✈ King Hussein International Airport",14,20);
+  doc.setFontSize(14); doc.setFont("helvetica","normal"); doc.text(`Section: ${e.core.type}`,14,30);
+  doc.text(`Date & Time: ${new Date().toLocaleString()}`,14,38);
+  let coreData = Object.entries(e.core).map(([k,v])=>[k,v]);
+  doc.autoTable({startY:50,head:[["Core Field","Value"]],body:coreData,theme:'grid'});
+  let techData = Object.entries(e.technical).map(([k,v])=>[k,v]);
+  doc.autoTable({startY:doc.lastAutoTable.finalY+10,head:[["Technical Field","Value"]],body:techData,theme:'grid'});
+  doc.save(`${e.core.code}.pdf`);
+}
+
+/* MAINTENANCE / INSPECTIONS / REPORTS */
+function openMaintenance(){alert("Maintenance Module (coming soon)");}
+function openInspections(){alert("Inspections Module (coming soon)");}
+function openReports(){alert("Reports Module (coming soon)");}
+
+/* UTILS */
+function closeOverlay(){overlay.classList.remove("active");}
+function setParameter(value){document.getElementById("paramValue").innerText=value;}
+</script>
+
+</body>
+</html>

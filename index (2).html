@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Maintenance Desktop</title>
+</head>
+<body>
+<h1>أدخل بياناتك</h1>
+<form id="myForm">
+  <input type="text" id="name" placeholder="الاسم" required>
+  <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+  <button type="submit">إرسال</button>
+</form>
+
+<script>
+document.getElementById('myForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+
+  fetch('http://localhost:3000/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert('تم إرسال البيانات!');
+    document.getElementById('myForm').reset();
+  });
+});
+</script>
+</body>
+</html>
