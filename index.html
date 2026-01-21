@@ -71,15 +71,7 @@ label{font-weight:bold;margin-top:10px;display:block}
     <div class="plane">✈</div>
     <div class="airport-title">King Hussein International Airport</div>
     <div class="airport-sub">Electromechanical Maintenance System</div>
-  </div>
-  <div class="info-bar">
-    <div class="info-item">🕒 <span id="dt"></span></div>
-    <div class="info-item">📊 Parameter: <span class="badge" id="paramValue">Operational</span></div>
-    <div class="info-item">🌡 <span id="tempValue">24 °C</span></div>
-    <div class="info-item">💧 <span id="humidityValue">48 %</span></div>
-    <div class="info-item">🌬 <span id="wind">12 km/h</span></div>
-    <div class="info-item">🧭 <span id="dir">NE</span></div>
-  </div>
+  </div> <div class="info-bar"> <div class="info-item">🕒 <span id="dt"></span></div> <div class="info-item">📊 Parameter: <span class="badge" id="paramValue">Operational</span></div> <div class="info-item">🌡 <span id="tempValue">24 °C</span></div> <div class="info-item">💧 <span id="humidityValue">48 %</span></div> <div class="info-item">🌬 <span id="wind">12 km/h</span></div> <div class="info-item">🧭 <span id="dir">NE</span></div> </div>
 </header>
 <main>
   <div class="grid">
@@ -98,8 +90,8 @@ label{font-weight:bold;margin-top:10px;display:block}
 
 <script>
 /* تسجيل الدخول */
-const correctUser = "ABDALH";
-const correctPass = "1997";
+const correctUser = "E2";
+const correctPass = "E2";
 
 const loginBtn = document.getElementById("loginBtn");
 const dt = document.getElementById("dt"); // عنصر التاريخ/الوقت
@@ -368,7 +360,40 @@ function showDeviceOnMap(i){
     alert("Device location not set!");
     return;
   }
+  <!-- ================= MAINTENANCE MODULE ================= -->
+function openMaintenance(){
+  let html = `<h3>🛠 Maintenance Management</h3>
+  <p>Select Asset Group</p><div class='grid'>`;
+  Object.keys(db.assets).forEach(g=> html += `<div class='card' onclick="openMaintGroup('${g}')">${g}</div>`);
+  html += `</div>`;
+  content.innerHTML = html;
+  overlay.classList.add('active');
+}
 
+function openMaintGroup(g){
+  let html = `<h3>${g} - Maintenance</h3><div class='grid'>`;
+  Object.keys(db.assets[g]).forEach(t=> html += `<div class='card' onclick="openMaintType('${g}','${t}')">${t}</div>`);
+  html += `</div><button onclick='openMaintenance()'>⬅ Back</button>`;
+  content.innerHTML = html;
+}
+
+function openMaintType(g,t){
+  let data = db.assets[g][t];
+  let html = `<h3>${g} → ${t} Maintenance</h3>
+  <table><tr><th>Code</th><th>Name</th><th>Location</th><th>Status</th><th>Open</th></tr>`;
+  data.forEach((e,i)=> html += `
+  <tr>
+    <td>${e.core.code}</td>
+    <td>${e.core.name}</td>
+    <td>${e.core.location}</td>
+    <td>${e.core.status}</td>
+    <td><button onclick="openMaintCard('${g}','${t}',${i})">Maintenance</button></td>
+  </tr>`);
+  html += `</table><button onclick="openMaintGroup('${g}')">⬅ Back</button>`;
+
+
+  content.innerHTML = html;
+}
   // إنشاء overlay للخريطة
   overlay.classList.add("active");
   content.innerHTML = `<h3>${device.core.code} – ${device.core.name} Location</h3>
@@ -427,13 +452,392 @@ function printPDF(){
 }
 
 /* MAINTENANCE / INSPECTIONS / REPORTS */
-function openMaintenance(){alert("Maintenance Module (coming soon)");}
+/* ================= MAINTENANCE MODULE ================= */
+
+let maintenanceDB = {};
+
+function openMaintenance(){
+  let html = `<h3>🛠 Maintenance Management</h3>
+  <p>Select Asset Group</p><div class='grid'>`;
+  Object.keys(db.assets).forEach(g=> html += `<div class='card' onclick="openMaintGroup('${g}')">${g}</div>`);
+  html += `</div>`;
+  content.innerHTML = html;
+  overlay.classList.add('active');
+}
+
+function openMaintGroup(g){
+  let html = `<h3>${g} - Maintenance</h3><div class='grid'>`;
+  Object.keys(db.assets[g]).forEach(t=> html += `<div class='card' onclick="openMaintType('${g}','${t}')">${t}</div>`);
+  html += `</div><button onclick='openMaintenance()'>⬅ Back</button>`;
+  content.innerHTML = html;
+}
+
+function openMaintType(g,t){
+  let data = db.assets[g][t];
+  let html = `<h3>${g} → ${t}</h3>
+  <table><tr><th>Code</th><th>Name</th><th>Location</th><th>Open</th></tr>`;
+  data.forEach((e,i)=> html += `
+  <tr>
+    <td>${e.core.code}</td>
+    <td>${e.core.name}</td>
+    <td>${e.core.location}</td>
+    <td><button onclick="openMaintCard('${g}','${t}',${i})">Maintenance Card</button></td>
+  </tr>`);
+  html += `</table><button onclick="openMaintGroup('${g}')">⬅ Back</button>`;
+  content.innerHTML = html;
+}
+
+function openMaintCard(g, t, i) {
+    // g = المجموعة، t = النوع، i = رقم الجهاز
+    let e = db.assets[g][t][i];          // هذا هو الجهاز الحالي
+    let key = `${g}-${t}-${i}`;          // المفتاح الفريد لكل جهاز
+    if(!maintenanceDB[key])              // إنشاء مكان للصيانة إذا لم يكن موجود
+        maintenanceDB[key] = {pm:{}, cm:[], files:[]};
+
+    // الآن يمكنك ملء الفورم بالبيانات الموجودة مسبقاً إذا وجدت
+    // مثال:
+    document.getElementById("maintDevice").value = i;
+    document.getElementById("techName").value = "";
+    document.getElementById("workOrder").value = "";
+    document.getElementById("maintDesc").value = "";
+}
+
+  let html = `<h3>Maintenance Card – ${e.core.code}</h3>
+  <table>
+  <tr><td>Asset</td><td>${e.core.name}</td></tr>
+  <tr><td>Location</td><td>${e.core.location}</td></tr>
+  <tr><td>Manufacturer</td><td>${e.core.manufacturer}</td></tr>
+  </table>
+
+  <h4>Preventive Maintenance</h4>
+  <select id="period">
+    <option>Daily</option><option>Weekly</option><option>Monthly</option><option>Yearly</option>
+  </select>
+  <textarea id="pmNote" placeholder="Inspection & actions..."></textarea>
+  <button onclick="savePM('${key}')">Save PM</button>
+
+  <h4>Corrective Maintenance</h4>
+  <textarea id="cmNote" placeholder="Fault & corrective action..."></textarea>
+  <button onclick="saveCM('${key}')">Save CM</button>
+
+  <button onclick="openMaintType('${g}','${t}')">⬅ Back</button>`;
+  content.innerHTML = html;
+
+
+function savePM(key){
+  let period = document.getElementById("period").value; // استخدم نفس الـ select id
+  let note = document.getElementById("pmNote").value.trim();
+
+  if(!note){ alert("Please enter PM note"); return; }
+
+  if(!maintenanceDB[key]) maintenanceDB[key] = {pm:{}, cm:[]};
+
+  maintenanceDB[key].pm[period] = {
+    note: note,
+    date: new Date().toLocaleString()
+  };
+
+  alert("Preventive Maintenance Saved Successfully ✔");
+}
+
+
+
+function saveCM(key){
+  let note = document.getElementById("cmNote").value.trim();
+
+  if(!note){ alert("Please enter CM note"); return; }
+
+  if(!maintenanceDB[key]) maintenanceDB[key] = {pm:{}, cm:[]};
+
+  maintenanceDB[key].cm.push({
+    note: note,
+    date: new Date().toLocaleString()
+  });
+
+  alert("Corrective Maintenance Saved Successfully ✔");
+}
+
+
 function openInspections(){alert("Inspections Module (coming soon)");}
 function openReports(){alert("Reports Module (coming soon)");}
 
 /* UTILS */
 function closeOverlay(){overlay.classList.remove("active");}
 function setParameter(value){document.getElementById("paramValue").innerText=value;}
+/* ===== MAINTENANCE MODULE ===== */
+function openMaintenance(){
+  let all=[];
+  Object.keys(db.assets).forEach(g=>{
+    Object.keys(db.assets[g]).forEach(t=>{
+      db.assets[g][t].forEach(e=>all.push(e));
+    });
+  });
+
+  let html=`<h3>🛠 Maintenance Module</h3>
+  <label>Search Device</label>
+  <select id="maintDevice">${all.map((e,i)=>`<option value="${i}">${e.core.code} – ${e.core.name}</option>`).join("")}</select>
+
+  <div class="section"><b>Maintenance Information</b>
+  <input id="techName" placeholder="Technician Name">
+  <input id="workOrder" placeholder="Work Order No">
+  <input id="spareParts" placeholder="Spare Parts Used">
+  <input id="hours" placeholder="Working Hours">
+  <select id="maintType">
+    <option>Corrective</option>
+    <option>Preventive Daily</option>
+    <option>Preventive Weekly</option>
+    <option>Preventive Monthly</option>
+    <option>Preventive Yearly</option>
+  </select>
+  <textarea id="maintDesc" placeholder="Maintenance Description"></textarea></div>
+
+  <div class="section">
+    <input type="file" id="maintFile">
+    <button onclick="uploadMaintFile()">⬆ Upload File</button>
+  </div>
+
+  <button onclick="saveMaintenance()">💾 Save</button>
+  <button onclick="printMaintenancePDF()">📄 Export PDF</button>`;
+
+  content.innerHTML=html;
+  overlay.classList.add("active");
+}
+
+let maintenanceFiles=[];
+
+function uploadMaintFile(){
+  const f=document.getElementById("maintFile").files[0];
+  if(!f){alert("Select file first");return;}
+  const r=new FileReader();
+  r.onload=e=>{maintenanceFiles.push({name:f.name,data:e.target.result});alert("Uploaded");};
+  r.readAsDataURL(f);
+}
+
+function saveMaintenance(){
+  alert("Maintenance Saved Successfully");
+}
+/* ================= MAINTENANCE ASSETS VIEW ================= */
+function openMaintenanceModule(){
+  let html="<h3>🛠 Maintenance – Asset Groups</h3><div class='grid'>";
+  Object.keys(db.assets).forEach(group=>{
+    html += `<div class='card' onclick="openMaintGroupView('${group}')">${group}</div>`;
+  });
+  html += "</div>";
+  content.innerHTML = html;
+  overlay.classList.add("active");
+}
+
+function openMaintGroupView(group){
+  let html=`<h3>${group} – Maintenance</h3><div class='grid'>`;
+  Object.keys(db.assets[group]).forEach(type=>{
+    html += `<div class='card' onclick="openMaintTypeView('${group}','${type}')">${type}</div>`;
+  });
+  html += `</div><button onclick="openMaintenanceModule()">⬅ Back</button>`;
+  content.innerHTML = html;
+}
+
+function openMaintTypeView(group,type){
+  let data = db.assets[group][type];
+  let html=`<h3>${group} → ${type} – Maintenance</h3>
+    <button onclick="addMaintenanceEntry('${group}','${type}')">➕ Add Maintenance Record</button>
+    <table>
+      <tr><th>Code</th><th>Name</th><th>Location</th><th>Status</th><th>Open</th></tr>`;
+  data.forEach((e,i)=>{
+    html += `<tr>
+      <td>${e.core.code}</td>
+      <td>${e.core.name}</td>
+      <td>${e.core.location}</td>
+      <td><span class="badge">${e.core.status}</span></td>
+      <td><button onclick="openMaintenanceCard('${group}','${type}',${i})">Open</button></td>
+    </tr>`;
+  });
+  html += `</table><button onclick="openMaintGroupView('${group}')">⬅ Back</button>`;
+  content.innerHTML = html;
+}
+
+/* ================= MAINTENANCE CARD ================= */
+function openMaintenanceCard(group,type,index){
+  let e = db.assets[group][type][index];
+  let key = `${group}-${type}-${index}`;
+  if(!maintenanceDB[key]) maintenanceDB[key]={pm:{},cm:[]};
+
+  let html=`<h3>Maintenance – ${e.core.code}</h3>
+    <table>
+      <tr><td>Asset</td><td>${e.core.name}</td></tr>
+      <tr><td>Location</td><td>${e.core.location}</td></tr>
+      <tr><td>Manufacturer</td><td>${e.core.manufacturer}</td></tr>
+      <tr><td>Status</td><td>${e.core.status}</td></tr>
+    </table>
+
+    <h4>Preventive Maintenance</h4>
+    <select id="pmPeriod">
+      <option>Daily</option><option>Weekly</option><option>Monthly</option><option>Yearly</option>
+    </select>
+    <textarea id="pmNote" placeholder="Inspection & actions..."></textarea>
+    <button onclick="savePM('${key}')">💾 Save PM</button>
+
+    <h4>Corrective Maintenance</h4>
+    <textarea id="cmNote" placeholder="Fault & corrective action..."></textarea>
+    <button onclick="saveCM('${key}')">💾 Save CM</button>
+
+    <div class="section">
+      <input type="file" id="maintFile">
+      <button onclick="uploadMaintFile('${key}')">⬆ Upload File</button>
+    </div>
+
+    <button onclick="printMaintenancePDF('${key}')">🖨 Print PDF</button>
+    <button onclick="openMaintTypeView('${group}','${type}')">⬅ Back</button>
+  `;
+
+  content.innerHTML = html;
+}
+
+/* ================= MAINTENANCE FILE UPLOAD ================= */
+function uploadMaintFile(key){
+  const fileInput = document.getElementById("maintFile");
+  const file = fileInput.files[0];
+  if(!file){ alert("Select a file first!"); return; }
+
+  if(!maintenanceDB[key].files) maintenanceDB[key].files=[];
+  const reader = new FileReader();
+  reader.onload = function(e){
+    maintenanceDB[key].files.push({name:file.name, content:e.target.result});
+    alert(`File "${file.name}" uploaded successfully!`);
+  }
+  reader.readAsDataURL(file);
+}
+
+/* ================= SAVE MAINTENANCE ================= */
+function savePM(key){
+  let period = document.getElementById("pmPeriod").value;
+  let note = document.getElementById("pmNote").value;
+  maintenanceDB[key].pm[period] = {note,date:new Date().toLocaleString()};
+  alert("Preventive Maintenance Saved ✔");
+}
+function saveCM(key){
+  let note = document.getElementById("cmNote").value;
+  maintenanceDB[key].cm.push({note,date:new Date().toLocaleString()});
+  alert("Corrective Maintenance Saved ✔");
+}
+
+/* ================= PRINT MAINTENANCE PDF (احترافي بالجدول) ================= */
+function printMaintenancePDF() {
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+
+  // الحصول على الجهاز المحدد
+  let deviceIndex = document.getElementById("maintDevice").value;
+  let allDevices = Object.keys(db.assets).flatMap(g =>
+    Object.keys(db.assets[g]).flatMap(t =>
+      db.assets[g][t]
+    )
+  );
+  let e = allDevices[deviceIndex];
+
+  // مفتاح الصيانة لهذا الجهاز
+  let key = `${e.core.type}-${e.core.code}`;
+  let record = maintenanceDB[key] || { pm: {}, cm: [], files: [] };
+
+  // ----- HEADER -----
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(18);
+  doc.text("✈ King Hussein International Airport",14,20);
+
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(12);
+  doc.text(`Asset: ${e.core.code} – ${e.core.name}`,14,30);
+  doc.text(`Location: ${e.core.location}`,14,38);
+  doc.text(`Status: ${e.core.status}`,14,46);
+  doc.text(`Date: ${new Date().toLocaleString()}`,150,46,{align:"right"});
+
+  let yStart = 55;
+
+  // ----- CORE DATA TABLE -----
+  let coreData = Object.entries(e.core).map(([k,v]) => [k,v]);
+  doc.autoTable({
+    startY: yStart,
+    head:[["Core Field","Value"]],
+    body: coreData,
+    theme:'grid',
+    headStyles:{fillColor:[41,128,185],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[240,240,240]}
+  });
+  yStart = doc.lastAutoTable.finalY + 5;
+
+  // ----- TECHNICAL DATA TABLE -----
+  let techData = Object.entries(e.technical).map(([k,v]) => [k,v]);
+  doc.autoTable({
+    startY: yStart,
+    head:[["Technical Field","Value"]],
+    body: techData,
+    theme:'grid',
+    headStyles:{fillColor:[39,174,96],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[245,245,245]}
+  });
+  yStart = doc.lastAutoTable.finalY + 5;
+
+  // ----- Preventive Maintenance Table -----
+  let pmBody = Object.entries(record.pm).map(([period,d])=>[period,d.note,d.date]);
+  if(pmBody.length===0) pmBody=[["None","",""]];
+  doc.autoTable({
+    startY: yStart,
+    head:[["Preventive Type","Note","Date"]],
+    body: pmBody,
+    theme:'grid',
+    headStyles:{fillColor:[230,126,34],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[250,245,240]}
+  });
+  yStart = doc.lastAutoTable.finalY + 5;
+
+  // ----- Corrective Maintenance Table -----
+  let cmBody = record.cm.map(c=>["CM",c.note,c.date]);
+  if(cmBody.length===0) cmBody=[["None","",""]];
+  doc.autoTable({
+    startY: yStart,
+    head:[["Corrective Type","Note","Date"]],
+    body: cmBody,
+    theme:'grid',
+    headStyles:{fillColor:[192,57,43],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[250,245,245]}
+  });
+  yStart = doc.lastAutoTable.finalY + 5;
+
+  // ----- Files Table -----
+  if(record.files && record.files.length>0){
+    let fileBody = record.files.map((f,i)=>[i+1,f.name]);
+    doc.autoTable({
+      startY: yStart,
+      head:[["No.","File Name"]],
+      body:fileBody,
+      theme:'grid',
+      headStyles:{fillColor:[52,73,94],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[245,245,245]}
+    });
+  }
+
+  // ----- FOOTER -----
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text("Generated by Electromechanical Maintenance System",105,290,{align:"center"});
+
+  // ----- SAVE PDF -----
+  doc.save(`${e.core.code}_Maintenance_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+function getMaintKey(){
+  let deviceIndex = document.getElementById("maintDevice").value;
+  let allDevices = Object.keys(db.assets).flatMap(g =>
+    Object.keys(db.assets[g]).flatMap(t =>
+      db.assets[g][t]
+    )
+  );
+  let e = allDevices[deviceIndex];
+  let key = `${e.core.type}-${e.core.code}`;
+  
+  if(!maintenanceDB[key]) maintenanceDB[key]={pm:{},cm:[],files:[]};
+  return key;
+}
+
+
 </script>
 
 </body>
