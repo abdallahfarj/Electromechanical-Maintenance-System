@@ -5,7 +5,7 @@ const { JSONFile } = require('lowdb/node');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // إعداد قاعدة البيانات المحلية
 const file = path.join(__dirname, 'database.json');
@@ -35,7 +35,8 @@ app.get('/users', async (req, res) => {
     res.send(db.data.users);
 });
 
-// تشغيل السيرفر
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
+
